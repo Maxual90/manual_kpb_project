@@ -1,3 +1,24 @@
+<?php
+
+// Database connection
+$host = "localhost";
+$user = "root";
+$password = "";
+$database = "firstdb";
+
+$conn = new mysqli($host, $user, $password, $database);
+
+// Check connection
+if ($conn->connect_error) {
+    die("Database connection failed: " . $conn->connect_error);
+}
+
+// Get students from database
+$sql = "SELECT admin_no, name, batch, course FROM students";
+$result = $conn->query($sql);
+
+?>
+
 <!DOCTYPE html>
 <html lang="en">
 
@@ -20,7 +41,6 @@ body{
     background:#f4f7fb;
 }
 
-
 /* Header */
 
 header{
@@ -37,7 +57,6 @@ header{
     font-weight:bold;
 }
 
-
 /* Switch buttons */
 
 .switch{
@@ -53,18 +72,15 @@ header{
     font-size:16px;
 }
 
-
 .feed-btn{
     background:white;
     color:#003366;
 }
 
-
 .message-btn{
     background:#ff9800;
     color:white;
 }
-
 
 /* Main */
 
@@ -74,18 +90,14 @@ header{
     margin:40px auto;
 }
 
-
 h2{
     color:#003366;
     margin-bottom:25px;
 }
 
-
 /* User cards */
 
-
 .user-card{
-
     background:white;
     padding:25px;
     margin-bottom:20px;
@@ -96,26 +108,20 @@ h2{
     align-items:center;
 
     box-shadow:0 5px 15px rgba(0,0,0,.1);
-
 }
-
 
 .user-info h3{
     color:#003366;
     margin-bottom:8px;
 }
 
-
 .user-info p{
     color:#666;
 }
 
-
-
 /* Connect button */
 
 .connect{
-
     background:#007bff;
     color:white;
 
@@ -131,31 +137,19 @@ h2{
     transition:.3s;
 }
 
-
-
 .connect:hover{
-
     background:#0056b3;
-
 }
-
 
 .connected{
-
     background:#28a745 !important;
-
 }
-
-
 
 </style>
 
-
 </head>
 
-
 <body>
-
 
 <header>
 
@@ -163,13 +157,11 @@ h2{
 🎓 Alumni Connect
 </div>
 
-
 <div class="switch">
 
 <button class="feed-btn">
 Feed
 </button>
-
 
 <button class="message-btn">
 Message
@@ -177,114 +169,67 @@ Message
 
 </div>
 
-
 </header>
 
-
-
-
 <div class="container">
-
 
 <h2>
 People You May Connect With
 </h2>
 
+<?php
 
+if ($result->num_rows > 0) {
 
-<div class="user-card">
+    while ($row = $result->fetch_assoc()) {
 
-<div class="user-info">
-
-<h3>EDUU</h3>
-
-<p>Computer Science | Batch 2024</p>
-
-</div>
-
-
-<button class="connect" onclick="connect(this)">
-Connect
-</button>
-
-
-</div>
-
-
-
+?>
 
 <div class="user-card">
 
-<div class="user-info">
+    <div class="user-info">
 
-<h3>KAVALA PULLI</h3>
+        <h3>
+            <?php echo htmlspecialchars($row['name']); ?>
+        </h3>
 
-<p>Electronics | Batch 2023</p>
+        <p>
+            <?php echo htmlspecialchars($row['course']); ?>
+            | Batch
+            <?php echo htmlspecialchars($row['batch']); ?>
+        </p>
 
-</div>
+    </div>
 
-
-<button class="connect" onclick="connect(this)">
-Connect
-</button>
-
-
-</div>
-
-
-
-
-
-<div class="user-card">
-
-<div class="user-info">
-
-<h3>AKMP</h3>
-
-<p>Mechanical Engineering | Batch 2022</p>
+    <button
+        class="connect"
+        onclick="connect(this)">
+        Connect
+    </button>
 
 </div>
 
+<?php
 
-<button class="connect" onclick="connect(this)">
-Connect
-</button>
+    }
 
+} else {
 
-</div>
+?>
 
+<p>No students found.</p>
 
+<?php
 
+}
 
+$conn->close();
 
-<div class="user-card">
-
-<div class="user-info">
-
-<h3>TRIKESH</h3>
-
-<p>Information Technology | Batch 2025</p>
+?>
 
 </div>
-
-
-<button class="connect" onclick="connect(this)">
-Connect
-</button>
-
-
-</div>
-
-
-
-
-</div>
-
-
-
 
 <script>
-
 
 function connect(button){
 
@@ -302,11 +247,8 @@ function connect(button){
 
 }
 
-
 </script>
 
-
-<script defer src="https://static.cloudflareinsights.com/beacon.min.js/v4513226cdae34746b4dedf0b4dfa099e1781791509496" integrity="sha512-ZE9pZaUXND66v380QUtch/5sE9tPFh2zg45pR2PB0CVkCtOREv2AJKkSidISWkysEuQ0EH8faUU5du78bx87UQ==" data-cf-beacon='{"version":"2024.11.0","token":"5a82a3f5739949efa1774530aa8b4b16","server_timing":{"name":{"cfCacheStatus":true,"cfEdge":true,"cfExtPri":true,"cfL4":true,"cfOrigin":true,"cfSpeedBrain":true},"location_startswith":null}}' crossorigin="anonymous"></script>
 </body>
 
 </html>
