@@ -1,0 +1,133 @@
+I am building a **College Alumni Connect** web project using **HTML, CSS, JavaScript, PHP, MySQL, and XAMPP**.
+
+### Current Setup
+
+* XAMPP: Apache + MySQL
+* Database: `firstdb`
+* Table: `students`
+* Columns:
+
+  * `admin_no` INT PRIMARY KEY
+  * `name` VARCHAR(25)
+  * `email` VARCHAR(25)
+  * `batch` VARCHAR(25)
+  * `course` VARCHAR(25)
+  * `pass` VARCHAR(25)
+* MySQL user: `root`
+* Password: empty
+* Host: `localhost`
+
+### Files
+
+```text
+login.html
+login.php
+feed.php
+register_form.html
+```
+
+### Login
+
+`login.html` submits:
+
+```html
+<form action="login.php" method="POST">
+```
+
+with:
+
+```text
+email
+pass
+```
+
+`login.php` checks:
+
+```sql
+SELECT * FROM students WHERE email = ? AND pass = ?
+```
+
+If valid:
+
+```php
+header("Location: feed.php");
+exit();
+```
+
+If invalid, show an alert and return to `login.html`.
+
+### Feed
+
+`feed.php` dynamically gets students from MySQL:
+
+```sql
+SELECT admin_no, name, batch, course FROM students
+```
+
+and displays each student as:
+
+```text
+NAME
+COURSE | Batch YEAR
+
+[ Connect ]
+```
+
+The feed currently has dummy values removed and uses real database values.
+
+The **Connect** button currently only changes visually to:
+
+```text
+✓ request sent
+```
+
+It does NOT yet save anything to MySQL.
+
+The header contains:
+
+```text
+🎓 Alumni Connect
+
+[ Feed ] [ Message ]
+```
+
+### Goal: Make Requests + Messaging Functional
+
+I now want to make the **Connect/connection request and Message mechanisms fully functional**.
+
+Use PHP sessions so the application knows which student is currently logged in.
+
+Create a `connections` table for:
+
+```text
+sender_admin_no
+receiver_admin_no
+status (pending/accepted/rejected)
+created_at
+```
+
+Create a `messages` table for:
+
+```text
+sender_admin_no
+receiver_admin_no
+message
+created_at
+```
+
+Required behavior:
+
+1. Logged-in user clicks **Connect**.
+2. A connection request is saved in MySQL with `pending` status.
+3. The other user can see incoming requests.
+4. They can **Accept** or **Reject**.
+5. Only accepted connections can message each other.
+6. The **Message** section should show conversations.
+7. Users should be able to send and receive messages stored in MySQL.
+8. Keep the existing feed design/style as much as possible.
+9. Do not use hardcoded student data.
+10. Use prepared statements and proper session handling.
+11. Do not pass the logged-in user's identity through URL parameters.
+12. Eventually improve password storage using `password_hash()` and `password_verify()`.
+
+Build this step-by-step, starting with the **PHP session + connection request mechanism**, while preserving the current UI.
