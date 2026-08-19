@@ -1,20 +1,50 @@
-<?php 
-if ($_SERVER['REQUEST_METHOD'] === 'POST'){
-    $conn = mysqli_connect("localhost","root","","firstdb");
-    if (!$conn) {
-        die("Connection failed: " . mysqli_connect_error());
-    }
-    $name=mysqli_real_escape_string($conn,$_POST['name']);
-    $admin_no=mysqli_real_escape_string($conn,$_POST['admission_number']);
-    $email=mysqli_real_escape_string($conn,$_POST['email']);
-    $batch=mysqli_real_escape_string($conn,$_POST['batch']);
-    $course=mysqli_real_escape_string($conn,$_POST['course']);
-    $pass=mysqli_real_escape_string($conn,$_POST['password']);
-    $sql="INSERT INTO students (name,admin_no,email,batch,course,pass) VALUES('$name','$admin_no','$email','$batch','$course','$pass')";
-    if ($conn->query($sql) === TRUE) {
-        echo "<script>alert('successfully added new user');</script>";
-    } else {
-        echo "<script>alert('oops something went wrong: " . $conn->error . "');</script>";
-    }
+<?php
+
+// Database connection
+$host = "localhost";
+$username = "root";
+$password = "";
+$database = "firstdb";
+
+$conn = new mysqli($host, $username, $password, $database);
+
+// Check connection
+if ($conn->connect_error) {
+    die("Connection failed: " . $conn->connect_error);
 }
+
+// Get values from HTML form
+$admin_no = $_POST['admission_number'];
+$name = $_POST['name'];
+$email = $_POST['email'];
+$batch = $_POST['batch'];
+$course = $_POST['course'];
+$pass = $_POST['password'];
+
+// Insert data into students table
+$sql = "INSERT INTO students (admin_no, name, email, batch, course, pass)
+        VALUES (?, ?, ?, ?, ?, ?)";
+
+$stmt = $conn->prepare($sql);
+
+$stmt->bind_param(
+    "isssss",
+    $admin_no,
+    $name,
+    $email,
+    $batch,
+    $course,
+    $pass
+);
+
+// Execute query
+if ($stmt->execute()) {
+    echo "Registration successful!";
+} else {
+    echo "Error: " . $stmt->error;
+}
+
+$stmt->close();
+$conn->close();
+
 ?>
