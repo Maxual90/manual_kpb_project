@@ -1,0 +1,428 @@
+Project Summary — College Alumni Connect
+
+I am building a College Alumni Connect website using HTML, CSS, JavaScript, PHP, MySQL, and XAMPP.
+
+Environment
+Using XAMPP
+Database: firstdb
+Table: students
+MySQL username: root
+MySQL password: empty ("")
+Host: localhost
+students table
+
+The table has these columns:
+
+admin_no    PRIMARY KEY    int(11)
+name                       varchar(25)
+email                      varchar(25)
+batch                      varchar(25)
+course                     varchar(25)
+pass                       varchar(25)
+
+Current project assumption:
+
+email is used as the login username.
+pass is used as the login password.
+Passwords are currently stored as plain text. This is only for the current simple project stage; later it should be changed to password_hash() / password_verify().
+1. Login page
+
+File:
+
+login.html
+
+The login form currently needs to be:
+
+<form action="login.php" method="POST">
+
+
+    <div class="input-box">
+        <label>Email</label>
+        <input type="text"
+               placeholder="Enter your email"
+               required
+               name="email">
+    </div>
+
+
+    <div class="input-box">
+        <label>Password</label>
+        <input type="password"
+               placeholder="Enter your password"
+               required
+               name="pass">
+    </div>
+
+
+    <button type="submit">Login</button>
+
+
+</form>
+
+Important:
+
+method="POST"
+
+was added because login.php checks:
+
+$_SERVER["REQUEST_METHOD"] == "POST"
+
+The input names must match PHP:
+
+name="email" → $_POST["email"]
+name="pass"  → $_POST["pass"]
+2. Current login.php
+
+The current login PHP is:
+
+<?php
+
+
+// Database connection
+$host = "localhost";
+$user = "root";
+$password = "";
+$database = "firstdb";
+
+
+$conn = new mysqli($host, $user, $password, $database);
+
+
+// Check connection
+if ($conn->connect_error) {
+    die("Database connection failed: " . $conn->connect_error);
+}
+
+
+// Check that the form was submitted
+if ($_SERVER["REQUEST_METHOD"] == "POST") {
+
+
+    $email = $_POST["email"];
+    $pass = $_POST["pass"];
+
+
+    // Check if user exists
+    $sql = "SELECT * FROM students WHERE email = ? AND pass = ?";
+
+
+    $stmt = $conn->prepare($sql);
+    $stmt->bind_param("ss", $email, $pass);
+    $stmt->execute();
+
+
+    $result = $stmt->get_result();
+
+
+    if ($result->num_rows == 1) {
+
+
+        // Login successful
+        header("Location: feed.php");
+        exit();
+
+
+    } else {
+
+
+        // Login failed
+        echo "<script>
+                alert('Invalid username or password');
+                window.location.href='login.html';
+              </script>";
+    }
+
+
+    $stmt->close();
+}
+
+
+$conn->close();
+
+
+?>
+Current login flow
+login.html
+     ↓
+POST email + pass
+     ↓
+login.php
+     ↓
+Check firstdb.students
+     ↓
+Credentials correct?
+     ↓ YES
+feed.php
+
+If credentials are wrong:
+
+Alert: Invalid username or password
+        ↓
+login.html
+3. Feed page
+
+The original page was:
+
+feed.html
+
+but because it needs to retrieve data from MySQL, it was changed to:
+
+feed.php
+
+The feed should dynamically retrieve students from:
+
+firstdb → students
+
+Instead of hardcoded dummy users such as:
+
+EDUU
+KAVALA PULLI
+AKMP
+TRIKESH
+
+it now gets real values from the database.
+
+The query is:
+
+$sql = "SELECT admin_no, name, batch, course FROM students";
+$result = $conn->query($sql);
+
+Each database row is displayed in the same card format:
+
+Student Name
+
+
+Course | Batch 2024
+
+
+                 Connect
+
+The PHP uses:
+
+htmlspecialchars()
+
+when displaying database values.
+
+Example:
+
+<h3>
+    <?php echo htmlspecialchars($row['name']); ?>
+</h3>
+
+
+<p>
+    <?php echo htmlspecialchars($row['course']); ?>
+    | Batch
+    <?php echo htmlspecialchars($row['batch']); ?>
+</p>
+4. Current feed.php concept
+
+The feed has:
+
+Header
+🎓 Alumni Connect
+
+
+[ Feed ] [ Message ]
+Main section
+People You May Connect With
+Dynamic student cards
+
+Each student from the database gets:
+
+┌─────────────────────────────────────┐
+│ NAME                         Connect │
+│ COURSE | Batch YEAR                 │
+└─────────────────────────────────────┘
+
+The Connect button currently only works visually using JavaScript.
+
+Current JavaScript:
+
+function connect(button){
+
+
+    if(button.classList.contains("connected"))
+    {
+        button.classList.remove("connected");
+        button.innerHTML="Connect";
+    }
+
+
+    else
+    {
+        button.classList.add("connected");
+        button.innerHTML="✓ request sent";
+    }
+
+
+}
+
+Important: Connection requests are NOT currently saved in MySQL. The button only changes visually.
+
+5. Current folder structure
+
+The project should roughly be:
+
+C:\xampp\htdocs\your_project\
+│
+├── login.html
+├── login.php
+├── feed.php
+├── register_form.html
+└── other project files...
+
+Open the project through Apache, for example:
+
+http://localhost/your_project/login.html
+
+Do NOT open the HTML by double-clicking it with a file:/// URL when testing PHP.
+
+XAMPP services needed:
+
+Apache → ON
+MySQL  → ON
+6. Current database connection
+
+All PHP files currently use:
+
+$host = "localhost";
+$user = "root";
+$password = "";
+$database = "firstdb";
+
+Connection:
+
+$conn = new mysqli($host, $user, $password, $database);
+7. Important next improvements
+
+The project is currently at the stage where registration → login → database-driven feed can be developed further.
+
+Recommended next steps:
+
+A. PHP sessions
+
+After successful login, use:
+
+session_start();
+
+and save the logged-in user's information.
+
+This will allow the application to know who is currently logged in.
+
+Then the feed can avoid showing the logged-in student themselves.
+
+For example:
+
+Logged-in user: Rahul
+
+
+Feed:
+Anu       → Connect
+Arjun     → Connect
+Vishnu    → Connect
+
+
+Rahul     → DON'T SHOW
+B. Real connection requests
+
+Currently:
+
+Connect
+   ↓
+✓ request sent
+
+is only JavaScript.
+
+Next, create a table such as:
+
+connections
+
+with fields like:
+
+id
+sender_admin_no
+receiver_admin_no
+status
+created_at
+
+Then clicking Connect can actually insert a request into MySQL.
+
+C. Messaging
+
+The header already has:
+
+Feed | Message
+
+Eventually create:
+
+messages
+
+and a messaging page using PHP/MySQL.
+
+D. Registration
+
+There is already:
+
+register_form.html
+
+The registration form should insert new students into:
+
+students
+
+using PHP.
+
+E. Password security
+
+Currently:
+
+pass = plain text
+
+For the final version, use:
+
+password_hash()
+
+when registering and:
+
+password_verify()
+
+when logging in.
+
+Most important current state
+
+The project currently works conceptually as:
+
+                ┌──────────────┐
+                │  login.html  │
+                └──────┬───────┘
+                       │
+                 email + pass
+                       │
+                       ▼
+                ┌──────────────┐
+                │  login.php   │
+                └──────┬───────┘
+                       │
+                       ▼
+             ┌───────────────────┐
+             │ firstdb.students  │
+             └─────────┬─────────┘
+                       │
+                 credentials
+                    correct?
+                    /     \
+                  YES      NO
+                   │        │
+                   ▼        ▼
+              feed.php    Alert
+                   │
+                   ▼
+          Get students from DB
+                   │
+                   ▼
+        Display dynamic user cards
+                   │
+                   ▼
+             [ Connect ]
+
+Continue from here: the most useful next feature is probably PHP sessions + showing the logged-in user's data + excluding themselves from the feed, followed by making Connect actually save requests in MySQL.

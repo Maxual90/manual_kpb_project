@@ -1,5 +1,7 @@
 <?php
 
+session_start();
+
 // Database connection
 $host = "localhost";
 $user = "root";
@@ -30,13 +32,20 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 
     if ($result->num_rows == 1) {
 
-        // Login successful
+        // Get user data FIRST
+        $student = $result->fetch_assoc();
+
+        // Store user information in session
+        $_SESSION['admin_no'] = $student['admin_no'];
+        $_SESSION['name'] = $student['name'];
+        $_SESSION['email'] = $student['email'];
+
+        // NOW redirect
         header("Location: feed.php");
         exit();
 
     } else {
 
-        // Login failed
         echo "<script>
                 alert('Invalid username or password');
                 window.location.href='login.html';
