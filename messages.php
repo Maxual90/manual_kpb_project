@@ -444,6 +444,8 @@ header{
 
     overflow:hidden;
 
+    min-height:0;
+
     box-shadow:
         0 4px 15px rgba(0,0,0,.1);
 }
@@ -511,6 +513,8 @@ header{
 .chat{
     height:100%;
 
+    min-height:0;
+
     display:flex;
 
     flex-direction:column;
@@ -548,6 +552,8 @@ header{
 
 .messages{
     flex:1;
+
+    min-height:0;
 
     padding:25px;
 
