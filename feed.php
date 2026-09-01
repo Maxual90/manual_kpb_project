@@ -34,6 +34,7 @@ $sql = "
     SELECT
         posts.id,
         posts.content,
+        posts.image_path,
         posts.created_at,
         students.name,
         students.course,
@@ -277,6 +278,148 @@ header{
 
 
 /* =========================
+   CREATE POST BOX
+========================= */
+
+.create-post{
+
+    background:white;
+
+    border-radius:12px;
+
+    padding:22px;
+
+    margin-bottom:20px;
+
+    box-shadow:0 4px 14px rgba(0,0,0,.08);
+}
+
+.create-post h3{
+
+    color:#003366;
+
+    font-size:17px;
+
+    margin-bottom:12px;
+}
+
+.create-post textarea{
+
+    width:100%;
+
+    min-height:70px;
+
+    padding:12px;
+
+    border:1px solid #ddd;
+
+    border-radius:8px;
+
+    font-size:14px;
+
+    resize:vertical;
+
+    font-family:inherit;
+}
+
+.create-post-footer{
+
+    display:flex;
+
+    align-items:center;
+
+    justify-content:space-between;
+
+    margin-top:12px;
+
+    gap:10px;
+
+    flex-wrap:wrap;
+}
+
+.file-input-label{
+
+    display:inline-flex;
+
+    align-items:center;
+
+    gap:6px;
+
+    padding:8px 14px;
+
+    border:1px solid #ccc;
+
+    border-radius:6px;
+
+    font-size:13px;
+
+    color:#555;
+
+    cursor:pointer;
+
+    transition:.3s;
+}
+
+.file-input-label:hover{
+
+    background:#f4f7fb;
+}
+
+.create-post input[type="file"]{
+
+    display:none;
+}
+
+.file-name{
+
+    font-size:12px;
+
+    color:#777;
+
+    margin-left:8px;
+}
+
+.post-btn{
+
+    padding:9px 22px;
+
+    border:none;
+
+    border-radius:6px;
+
+    background:#003366;
+
+    color:white;
+
+    cursor:pointer;
+
+    font-size:14px;
+
+    transition:.3s;
+}
+
+.post-btn:hover{
+
+    background:#00508f;
+}
+
+.form-error{
+
+    background:#fdecea;
+
+    color:#b71c1c;
+
+    padding:10px 15px;
+
+    border-radius:8px;
+
+    margin-bottom:20px;
+
+    font-size:14px;
+}
+
+
+/* =========================
    POST CARD
 ========================= */
 
@@ -347,6 +490,21 @@ header{
     font-size:13px;
 }
 
+
+.post-image{
+
+    width:100%;
+
+    max-height:480px;
+
+    object-fit:cover;
+
+    border-radius:10px;
+
+    margin-bottom:10px;
+
+    display:block;
+}
 
 .post-content{
 
@@ -656,6 +814,83 @@ header{
 
         <?php
 
+        if (isset($_GET['error'])) {
+
+            $errors = [
+                'empty'          => 'Please write a caption or choose an image before posting.',
+                'caption_too_long' => 'Your caption is too long (max 2000 characters).',
+                'upload_failed'  => 'The image could not be uploaded. Please try again.',
+                'too_large'      => 'That image is too large. Max size is 5MB.',
+                'not_image'      => 'The selected file is not a valid image.',
+                'bad_type'       => 'Only JPG, PNG, GIF, and WEBP images are allowed.',
+            ];
+
+            $error_key = $_GET['error'];
+
+            if (isset($errors[$error_key])) {
+        ?>
+
+        <div class="form-error">
+            <?php echo htmlspecialchars($errors[$error_key]); ?>
+        </div>
+
+        <?php
+            }
+        }
+        ?>
+
+
+        <!-- =====================
+             CREATE POST
+        ====================== -->
+
+        <div class="create-post">
+
+            <h3>Share something with your network</h3>
+
+            <form
+                action="create_post.php"
+                method="POST"
+                enctype="multipart/form-data"
+                id="createPostForm"
+            >
+
+                <textarea
+                    name="caption"
+                    placeholder="Write a caption..."
+                    maxlength="2000"
+                ></textarea>
+
+                <div class="create-post-footer">
+
+                    <div>
+                        <label class="file-input-label" for="postImage">
+                            📷 Add photo
+                        </label>
+
+                        <input
+                            type="file"
+                            id="postImage"
+                            name="image"
+                            accept="image/jpeg,image/png,image/gif,image/webp"
+                        >
+
+                        <span class="file-name" id="fileNameDisplay"></span>
+                    </div>
+
+                    <button type="submit" class="post-btn">
+                        Post
+                    </button>
+
+                </div>
+
+            </form>
+
+        </div>
+
+
+        <?php
+
         if ($result->num_rows > 0) {
 
             while ($row = $result->fetch_assoc()) {
@@ -732,6 +967,19 @@ header{
             </div>
 
 
+            <?php if (!empty($row['image_path'])) { ?>
+
+            <img
+                class="post-image"
+                src="<?php echo htmlspecialchars($row['image_path']); ?>"
+                alt="Post image"
+            >
+
+            <?php } ?>
+
+
+            <?php if (!empty(trim($row['content']))) { ?>
+
             <div class="post-content">
 
                 <?php
@@ -745,6 +993,8 @@ header{
                 ?>
 
             </div>
+
+            <?php } ?>
 
 
             <div class="post-time">
@@ -937,6 +1187,23 @@ header{
 
 </div>
 
+
+<script>
+
+const postImageInput = document.getElementById('postImage');
+const fileNameDisplay = document.getElementById('fileNameDisplay');
+
+if (postImageInput) {
+    postImageInput.addEventListener('change', function () {
+        if (this.files && this.files.length > 0) {
+            fileNameDisplay.textContent = this.files[0].name;
+        } else {
+            fileNameDisplay.textContent = '';
+        }
+    });
+}
+
+</script>
 
 </body>
 
