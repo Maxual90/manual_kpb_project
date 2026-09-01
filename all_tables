@@ -1,0 +1,48 @@
+-- 1. 
+CREATE TABLE students (
+    admin_no INT(11) PRIMARY KEY,
+    name     VARCHAR(25) NOT NULL,
+    email    VARCHAR(25) NOT NULL UNIQUE,
+    batch    VARCHAR(25) NOT NULL,
+    course   VARCHAR(25) NOT NULL,
+    pass     VARCHAR(255) NOT NULL   -- widened now to fit password_hash() later
+);
+
+-- 2. connections (request/accept/reject relationships)
+CREATE TABLE connections (
+    id                 INT AUTO_INCREMENT PRIMARY KEY,
+    sender_admin_no    INT(11) NOT NULL,
+    receiver_admin_no  INT(11) NOT NULL,
+    status             ENUM('pending','accepted','rejected') NOT NULL DEFAULT 'pending',
+    created_at         TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+
+    FOREIGN KEY (sender_admin_no)   REFERENCES students(admin_no) ON DELETE CASCADE,
+    FOREIGN KEY (receiver_admin_no) REFERENCES students(admin_no) ON DELETE CASCADE,
+
+    UNIQUE KEY unique_pair (sender_admin_no, receiver_admin_no)
+);
+
+-- 3. messages (direct messages between accepted connections)
+CREATE TABLE messages (
+    id                 INT AUTO_INCREMENT PRIMARY KEY,
+    sender_admin_no    INT(11) NOT NULL,
+    receiver_admin_no  INT(11) NOT NULL,
+    message            TEXT NOT NULL,
+    created_at         TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+
+    FOREIGN KEY (sender_admin_no)   REFERENCES students(admin_no) ON DELETE CASCADE,
+    FOREIGN KEY (receiver_admin_no) REFERENCES students(admin_no) ON DELETE CASCADE
+);
+
+-- 4. posts (needed for feed.php to work — currently missing from your DB)
+CREATE TABLE posts (
+    id         INT AUTO_INCREMENT PRIMARY KEY,
+    admin_no   INT(11) NOT NULL,
+    content    TEXT NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+
+    FOREIGN KEY (admin_no) REFERENCES students(admin_no) ON DELETE CASCADE
+);
+
+ALTER TABLE posts
+    ADD COLUMN image_path VARCHAR(255) NULL AFTER content;
