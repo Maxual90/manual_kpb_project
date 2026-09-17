@@ -27,11 +27,11 @@ if ($conn->connect_error) {
 
 
 // =========================
-// GET POSTS FROM ACCEPTED CONNECTIONS
+// GET POSTS (OWN POSTS + ACCEPTED CONNECTIONS)
 // =========================
 
 $sql = "
-    SELECT
+    SELECT DISTINCT
         posts.id,
         posts.content,
         posts.image_path,
@@ -45,7 +45,7 @@ $sql = "
     INNER JOIN students
         ON posts.admin_no = students.admin_no
 
-    INNER JOIN connections
+    LEFT JOIN connections
         ON (
             (
                 connections.sender_admin_no = ?
@@ -58,8 +58,8 @@ $sql = "
             )
         )
 
-    WHERE connections.status = 'accepted'
-      AND posts.admin_no != ?
+    WHERE posts.admin_no = ?
+       OR connections.status = 'accepted'
 
     ORDER BY posts.created_at DESC
 ";
@@ -817,12 +817,12 @@ header{
         if (isset($_GET['error'])) {
 
             $errors = [
-                'empty'          => 'Please write a caption or choose an image before posting.',
+                'empty'            => 'Please write a caption or choose an image before posting.',
                 'caption_too_long' => 'Your caption is too long (max 2000 characters).',
-                'upload_failed'  => 'The image could not be uploaded. Please try again.',
-                'too_large'      => 'That image is too large. Max size is 5MB.',
-                'not_image'      => 'The selected file is not a valid image.',
-                'bad_type'       => 'Only JPG, PNG, GIF, and WEBP images are allowed.',
+                'upload_failed'    => 'The image could not be uploaded. Please try again.',
+                'too_large'        => 'That image is too large. Max size is 5MB.',
+                'not_image'        => 'The selected file is not a valid image.',
+                'bad_type'         => 'Only JPG, PNG, GIF, and WEBP images are allowed.',
             ];
 
             $error_key = $_GET['error'];
@@ -1029,7 +1029,7 @@ header{
             </h3>
 
             <p>
-                Posts from your accepted connections
+                Posts from you and your accepted connections
                 will appear here.
             </p>
 
