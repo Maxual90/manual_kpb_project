@@ -9,6 +9,10 @@ if (!isset($_SESSION['admin_no'])) {
 
 $logged_in_admin_no = $_SESSION['admin_no'];
 
+if (empty($_SESSION['csrf_token'])) {
+    $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
+}
+
 
 // =========================
 // DATABASE CONNECTION
@@ -27,12 +31,13 @@ if ($conn->connect_error) {
 
 
 // =========================
-// GET POSTS (OWN POSTS + ACCEPTED CONNECTIONS)
+// GET OWN POSTS + POSTS FROM ACCEPTED CONNECTIONS
 // =========================
 
 $sql = "
-    SELECT DISTINCT
+    SELECT
         posts.id,
+        posts.admin_no,
         posts.content,
         posts.image_path,
         posts.created_at,
@@ -45,21 +50,25 @@ $sql = "
     INNER JOIN students
         ON posts.admin_no = students.admin_no
 
-    LEFT JOIN connections
-        ON (
-            (
-                connections.sender_admin_no = ?
-                AND connections.receiver_admin_no = posts.admin_no
-            )
-            OR
-            (
-                connections.receiver_admin_no = ?
-                AND connections.sender_admin_no = posts.admin_no
-            )
-        )
-
     WHERE posts.admin_no = ?
-       OR connections.status = 'accepted'
+
+       OR posts.admin_no IN (
+
+            SELECT
+                CASE
+                    WHEN sender_admin_no = ?
+                    THEN receiver_admin_no
+                    ELSE sender_admin_no
+                END
+
+            FROM connections
+
+            WHERE status = 'accepted'
+              AND (
+                    sender_admin_no = ?
+                    OR receiver_admin_no = ?
+              )
+       )
 
     ORDER BY posts.created_at DESC
 ";
@@ -67,7 +76,8 @@ $sql = "
 $stmt = $conn->prepare($sql);
 
 $stmt->bind_param(
-    "iii",
+    "iiii",
+    $logged_in_admin_no,
     $logged_in_admin_no,
     $logged_in_admin_no,
     $logged_in_admin_no
@@ -76,6 +86,33 @@ $stmt->bind_param(
 $stmt->execute();
 
 $result = $stmt->get_result();
+
+
+// =========================
+// FILTERS (BATCH + NAME SEARCH)
+// =========================
+
+$filter_batch = trim($_GET['batch'] ?? '');
+$search_name  = trim($_GET['q'] ?? '');
+
+if (mb_strlen($search_name) > 50) {
+    $search_name = mb_substr($search_name, 0, 50);
+}
+
+$filters_active = ($filter_batch !== '' || $search_name !== '');
+
+$batch_list = [];
+
+$batch_result = $conn->query("
+    SELECT DISTINCT batch
+    FROM students
+    WHERE batch <> ''
+    ORDER BY batch DESC
+");
+
+while ($b = $batch_result->fetch_assoc()) {
+    $batch_list[] = $b['batch'];
+}
 
 
 // =========================
@@ -107,19 +144,33 @@ $people_sql = "
         WHERE sender_admin_no = ?
            OR receiver_admin_no = ?
     )
-
-    ORDER BY name
 ";
 
-$people_stmt = $conn->prepare($people_sql);
-
-$people_stmt->bind_param(
-    "iiii",
+$people_types  = "iiii";
+$people_params = [
     $logged_in_admin_no,
     $logged_in_admin_no,
     $logged_in_admin_no,
     $logged_in_admin_no
-);
+];
+
+if ($filter_batch !== '') {
+    $people_sql     .= " AND batch = ?";
+    $people_types   .= "s";
+    $people_params[] = $filter_batch;
+}
+
+if ($search_name !== '') {
+    $people_sql     .= " AND name LIKE ?";
+    $people_types   .= "s";
+    $people_params[] = '%' . addcslashes($search_name, '%_\\') . '%';
+}
+
+$people_sql .= " ORDER BY name";
+
+$people_stmt = $conn->prepare($people_sql);
+
+$people_stmt->bind_param($people_types, ...$people_params);
 
 $people_stmt->execute();
 
@@ -530,6 +581,38 @@ header{
 }
 
 
+.delete-form{
+
+    margin-left:auto;
+}
+
+.delete-btn{
+
+    padding:7px 14px;
+
+    border:1px solid #dc3545;
+
+    border-radius:6px;
+
+    background:white;
+
+    color:#dc3545;
+
+    cursor:pointer;
+
+    font-size:13px;
+
+    transition:.3s;
+}
+
+.delete-btn:hover{
+
+    background:#dc3545;
+
+    color:white;
+}
+
+
 /* =========================
    RIGHT SIDE
 ========================= */
@@ -559,6 +642,98 @@ header{
     margin-bottom:20px;
 
     font-size:22px;
+}
+
+
+/* =========================
+   FILTER BAR
+========================= */
+
+.filter-form{
+
+    display:flex;
+
+    gap:8px;
+
+    margin-bottom:20px;
+
+    flex-wrap:wrap;
+}
+
+.filter-form select,
+.filter-form input[type="text"]{
+
+    padding:9px 10px;
+
+    border:1px solid #ddd;
+
+    border-radius:6px;
+
+    font-size:14px;
+
+    background:white;
+
+    color:#333;
+}
+
+.filter-form select{
+
+    flex:0 0 130px;
+}
+
+.filter-form input[type="text"]{
+
+    flex:1;
+
+    min-width:120px;
+}
+
+.filter-form select:focus,
+.filter-form input[type="text"]:focus{
+
+    outline:none;
+
+    border-color:#007bff;
+}
+
+.filter-btn{
+
+    padding:9px 16px;
+
+    border:none;
+
+    border-radius:6px;
+
+    background:#003366;
+
+    color:white;
+
+    cursor:pointer;
+
+    font-size:14px;
+
+    transition:.3s;
+}
+
+.filter-btn:hover{
+
+    background:#00508f;
+}
+
+.filter-clear{
+
+    align-self:center;
+
+    font-size:13px;
+
+    color:#007bff;
+
+    text-decoration:none;
+}
+
+.filter-clear:hover{
+
+    text-decoration:underline;
 }
 
 
@@ -817,12 +992,13 @@ header{
         if (isset($_GET['error'])) {
 
             $errors = [
-                'empty'            => 'Please write a caption or choose an image before posting.',
+                'empty'          => 'Please write a caption or choose an image before posting.',
                 'caption_too_long' => 'Your caption is too long (max 2000 characters).',
-                'upload_failed'    => 'The image could not be uploaded. Please try again.',
-                'too_large'        => 'That image is too large. Max size is 5MB.',
-                'not_image'        => 'The selected file is not a valid image.',
-                'bad_type'         => 'Only JPG, PNG, GIF, and WEBP images are allowed.',
+                'upload_failed'  => 'The image could not be uploaded. Please try again.',
+                'too_large'      => 'That image is too large. Max size is 5MB.',
+                'not_image'      => 'The selected file is not a valid image.',
+                'bad_type'       => 'Only JPG, PNG, GIF, and WEBP images are allowed.',
+                'delete_failed'  => 'The post could not be deleted.',
             ];
 
             $error_key = $_GET['error'];
@@ -964,6 +1140,36 @@ header{
 
                 </div>
 
+
+                <?php if ((int)$row['admin_no'] === (int)$logged_in_admin_no) { ?>
+
+                <form
+                    class="delete-form"
+                    action="delete_post.php"
+                    method="POST"
+                    onsubmit="return confirm('Delete this post permanently?');"
+                >
+
+                    <input
+                        type="hidden"
+                        name="post_id"
+                        value="<?php echo (int)$row['id']; ?>"
+                    >
+
+                    <input
+                        type="hidden"
+                        name="csrf_token"
+                        value="<?php echo htmlspecialchars($_SESSION['csrf_token']); ?>"
+                    >
+
+                    <button type="submit" class="delete-btn">
+                        Delete
+                    </button>
+
+                </form>
+
+                <?php } ?>
+
             </div>
 
 
@@ -1029,7 +1235,7 @@ header{
             </h3>
 
             <p>
-                Posts from you and your accepted connections
+                Posts from your accepted connections
                 will appear here.
             </p>
 
@@ -1055,6 +1261,48 @@ header{
         <h2>
             Connect With Alumni
         </h2>
+
+
+        <form class="filter-form" method="GET" action="feed.php">
+
+            <select name="batch">
+
+                <option value="">All batches</option>
+
+                <?php foreach ($batch_list as $batch_option) { ?>
+
+                <option
+                    value="<?php echo htmlspecialchars($batch_option); ?>"
+                    <?php echo ($batch_option === $filter_batch) ? 'selected' : ''; ?>
+                >
+                    <?php echo htmlspecialchars($batch_option); ?>
+                </option>
+
+                <?php } ?>
+
+            </select>
+
+            <input
+                type="text"
+                name="q"
+                placeholder="Search by name..."
+                maxlength="50"
+                value="<?php echo htmlspecialchars($search_name); ?>"
+            >
+
+            <button type="submit" class="filter-btn">
+                Search
+            </button>
+
+            <?php if ($filters_active) { ?>
+
+            <a href="feed.php" class="filter-clear">
+                Clear
+            </a>
+
+            <?php } ?>
+
+        </form>
 
 
         <?php
@@ -1172,7 +1420,11 @@ header{
 
 
         <p class="no-people">
-            No new alumni to connect with.
+            <?php
+            echo $filters_active
+                ? 'No alumni match your search.'
+                : 'No new alumni to connect with.';
+            ?>
         </p>
 
 
