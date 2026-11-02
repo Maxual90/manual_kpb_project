@@ -21,6 +21,13 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     $email = $_POST["email"];
     $pass = $_POST["pass"];
 
+    // Admin login
+    if ($email === "admin" && $pass === "admin") {
+        $_SESSION['is_admin'] = true;
+        header("Location: admin.php");
+        exit();
+    }
+
     // Check if user exists
     $sql = "SELECT * FROM students WHERE email = ? AND pass = ?";
 
@@ -41,7 +48,13 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         $_SESSION['email'] = $student['email'];
 
         // NOW redirect
-        header("Location: feed.php");
+        $_SESSION['status'] = $student['status'];
+
+        if ($student['status'] === 'approved') {
+            header("Location: feed.php");
+        } else {
+            header("Location: pending.php");
+        }
         exit();
 
     } else {
