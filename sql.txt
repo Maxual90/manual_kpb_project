@@ -1,0 +1,131 @@
+-- =====================================================
+-- College Alumni Connect - database setup
+-- Usage:  mysql -u root < database.sql
+--   or phpMyAdmin > Import > choose this file
+-- Re-running this file RESETS the 4 tables below.
+-- =====================================================
+
+CREATE DATABASE IF NOT EXISTS firstdb
+    CHARACTER SET utf8mb4
+    COLLATE utf8mb4_unicode_ci;
+
+USE firstdb;
+
+DROP TABLE IF EXISTS messages;
+DROP TABLE IF EXISTS posts;
+DROP TABLE IF EXISTS connections;
+DROP TABLE IF EXISTS students;
+
+
+-- =====================================================
+-- TABLES
+-- =====================================================
+
+CREATE TABLE students (
+    admin_no INT          NOT NULL,
+    name     VARCHAR(100) NOT NULL,
+    email    VARCHAR(100) NOT NULL,
+    batch    VARCHAR(20)  NOT NULL,
+    course   VARCHAR(100) NOT NULL,
+    pass     VARCHAR(255) NOT NULL,
+    status   ENUM('pending','approved','rejected') NOT NULL DEFAULT 'pending',
+    PRIMARY KEY (admin_no),
+    UNIQUE KEY uq_students_email (email),
+    KEY idx_students_status (status),
+    KEY idx_students_batch (batch)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE connections (
+    id                INT NOT NULL AUTO_INCREMENT,
+    sender_admin_no   INT NOT NULL,
+    receiver_admin_no INT NOT NULL,
+    status            ENUM('pending','accepted','rejected') NOT NULL DEFAULT 'pending',
+    created_at        TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    PRIMARY KEY (id),
+    UNIQUE KEY uq_connection_pair (sender_admin_no, receiver_admin_no),
+    KEY idx_connections_receiver (receiver_admin_no),
+    CONSTRAINT fk_conn_sender   FOREIGN KEY (sender_admin_no)
+        REFERENCES students (admin_no) ON DELETE CASCADE,
+    CONSTRAINT fk_conn_receiver FOREIGN KEY (receiver_admin_no)
+        REFERENCES students (admin_no) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE posts (
+    id         INT NOT NULL AUTO_INCREMENT,
+    admin_no   INT NOT NULL,
+    content    TEXT NULL,
+    image_path VARCHAR(255) NULL,
+    created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    PRIMARY KEY (id),
+    KEY idx_posts_author (admin_no),
+    KEY idx_posts_created (created_at),
+    CONSTRAINT fk_posts_student FOREIGN KEY (admin_no)
+        REFERENCES students (admin_no) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE messages (
+    id                INT NOT NULL AUTO_INCREMENT,
+    sender_admin_no   INT NOT NULL,
+    receiver_admin_no INT NOT NULL,
+    message           TEXT NOT NULL,
+    created_at        TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    PRIMARY KEY (id),
+    KEY idx_messages_pair (sender_admin_no, receiver_admin_no, created_at),
+    CONSTRAINT fk_msg_sender   FOREIGN KEY (sender_admin_no)
+        REFERENCES students (admin_no) ON DELETE CASCADE,
+    CONSTRAINT fk_msg_receiver FOREIGN KEY (receiver_admin_no)
+        REFERENCES students (admin_no) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+
+-- =====================================================
+-- DUMMY DATA  (all dummy passwords: password123)
+-- =====================================================
+
+INSERT INTO students (admin_no, name, email, batch, course, pass, status) VALUES
+(1001, 'Aarav Nair',    'aarav@example.com',  '2020-2024', 'B.Tech CSE',   'password123', 'approved'),
+(1002, 'Meera Menon',   'meera@example.com',  '2021-2025', 'B.Tech ECE',   'password123', 'approved'),
+(1003, 'Rohan Das',     'rohan@example.com',  '2021-2025', 'B.Tech CSE',   'password123', 'approved'),
+(1004, 'Sneha Pillai',  'sneha@example.com',  '2022-2026', 'BBA',          'password123', 'approved'),
+(1005, 'Kiran Varma',   'kiran@example.com',  '2023-2027', 'B.Tech Civil', 'password123', 'approved');
+
+-- Connection requests
+-- 1001<->1002, 1001<->1003, 1002<->1004 are accepted
+-- 1004->1001 and 1005->1001 are pending (shown on Connection Requests page)
+-- 1003->1005 was rejected
+INSERT INTO connections (sender_admin_no, receiver_admin_no, status) VALUES
+(1001, 1002, 'accepted'),
+(1003, 1001, 'accepted'),
+(1002, 1004, 'accepted'),
+(1004, 1001, 'pending'),
+(1005, 1001, 'pending'),
+(1003, 1005, 'rejected');
+
+-- Posts (image_path accepts a local uploads/ path or a full image URL)
+INSERT INTO posts (admin_no, content, image_path, created_at) VALUES
+(1001, 'Excited to join College Alumni Connect! Looking forward to meeting everyone.',
+       'https://picsum.photos/seed/alumni1/800/500', DATE_SUB(NOW(), INTERVAL 6 DAY)),
+(1002, 'Our ECE batch reunion is planned for next month. Who is in?',
+       'https://picsum.photos/seed/reunion2/800/500', DATE_SUB(NOW(), INTERVAL 4 DAY)),
+(1003, 'Just finished my final year project demo. Thanks to everyone who helped!',
+       NULL, DATE_SUB(NOW(), INTERVAL 3 DAY)),
+(1004, 'Campus fest photos are up. Great memories!',
+       'https://picsum.photos/seed/campus4/800/500', DATE_SUB(NOW(), INTERVAL 2 DAY)),
+(1001, 'Tip for juniors: start building projects early and share them on GitHub.',
+       NULL, DATE_SUB(NOW(), INTERVAL 1 DAY)),
+(1002, 'Sunset from the college terrace today.',
+       'https://picsum.photos/seed/sunset5/800/500', DATE_SUB(NOW(), INTERVAL 5 HOUR)),
+(1003, 'Anyone hiring interns for web development this summer?',
+       NULL, DATE_SUB(NOW(), INTERVAL 1 HOUR)),
+(1005, 'New here. Hello everyone!',
+       NULL, DATE_SUB(NOW(), INTERVAL 30 MINUTE));
+
+-- Messages (only between accepted connections)
+INSERT INTO messages (sender_admin_no, receiver_admin_no, message, created_at) VALUES
+(1001, 1002, 'Hi Meera, thanks for connecting!',                 DATE_SUB(NOW(), INTERVAL 3 DAY)),
+(1002, 1001, 'Hey Aarav! Are you coming to the reunion?',        DATE_SUB(NOW(), INTERVAL 3 DAY) + INTERVAL 5 MINUTE),
+(1001, 1002, 'Yes, I will be there.',                            DATE_SUB(NOW(), INTERVAL 3 DAY) + INTERVAL 9 MINUTE),
+(1003, 1001, 'Aarav, can you review my project report?',         DATE_SUB(NOW(), INTERVAL 1 DAY)),
+(1001, 1003, 'Sure, send it over.',                              DATE_SUB(NOW(), INTERVAL 1 DAY) + INTERVAL 10 MINUTE),
+(1002, 1004, 'Loved your campus fest photos!',                   DATE_SUB(NOW(), INTERVAL 2 HOUR)),
+(1004, 1002, 'Thank you! More coming soon.',                     DATE_SUB(NOW(), INTERVAL 1 HOUR));
