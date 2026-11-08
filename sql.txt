@@ -82,50 +82,82 @@ CREATE TABLE messages (
 -- DUMMY DATA  (all dummy passwords: password123)
 -- =====================================================
 
+-- 11 approved, 2 pending and 1 rejected student
+-- (the pending and rejected ones show on the admin panel and see the pending page)
 INSERT INTO students (admin_no, name, email, batch, course, pass, status) VALUES
-(1001, 'Aarav Nair',    'aarav@example.com',  '2020-2024', 'B.Tech CSE',   'password123', 'approved'),
-(1002, 'Meera Menon',   'meera@example.com',  '2021-2025', 'B.Tech ECE',   'password123', 'approved'),
-(1003, 'Rohan Das',     'rohan@example.com',  '2021-2025', 'B.Tech CSE',   'password123', 'approved'),
-(1004, 'Sneha Pillai',  'sneha@example.com',  '2022-2026', 'BBA',          'password123', 'approved'),
-(1005, 'Kiran Varma',   'kiran@example.com',  '2023-2027', 'B.Tech Civil', 'password123', 'approved');
+(1001, 'Manu',            'manu@example.com',           '2021-2024', 'BSc CS',         'password123', 'approved'),
+(1002, 'Adhityan',        'adhityan@example.com',       '2021-2024', 'BSc Maths',      'password123', 'approved'),
+(1003, 'Akash',           'akash@example.com',          '2022-2025', 'BSc CS',         'password123', 'approved'),
+(1004, 'Azed',            'azed@example.com',           '2020-2023', 'BSc Botany',     'password123', 'approved'),
+(1005, 'Sanju',           'sanju@example.com',          '2022-2025', 'BSc Psychology', 'password123', 'approved'),
+(1006, 'Aran',            'aran@example.com',           '2023-2026', 'BSc Maths',      'password123', 'approved'),
+(1007, 'Neeraja',         'neeraja@example.com',        '2023-2026', 'BSc Botany',     'password123', 'approved'),
+(1008, 'Fathima',         'fathima@example.com',        '2020-2023', 'BSc Psychology', 'password123', 'approved'),
+(1009, 'Basil Eldho',     'basil.eldho@example.com',    '2023-2026', 'BSc CS',         'password123', 'approved'),
+(1010, 'Basil Raju',      'basil.raju@example.com',     '2024-2027', 'BSc Maths',      'password123', 'approved'),
+(1011, 'Riswan',          'riswan@example.com',         '2019-2022', 'BSc CS',         'password123', 'rejected'),
+(1012, 'Krishnakumar',    'krishnakumar@example.com',   '2021-2024', 'BSc Botany',     'password123', 'approved'),
+(1013, 'Soorya Narayan',  'soorya.narayan@example.com', '2024-2027', 'BSc Psychology', 'password123', 'pending'),
+(1014, 'Shivu',           'shivu@example.com',          '2022-2025', 'BSc CS',         'password123', 'pending');
 
 -- Connection requests
--- 1001<->1002, 1001<->1003, 1002<->1004 are accepted
--- 1004->1001 and 1005->1001 are pending (shown on Connection Requests page)
--- 1003->1005 was rejected
+-- Manu (1001) has 4 accepted connections and 3 pending requests to review
 INSERT INTO connections (sender_admin_no, receiver_admin_no, status) VALUES
 (1001, 1002, 'accepted'),
 (1003, 1001, 'accepted'),
-(1002, 1004, 'accepted'),
-(1004, 1001, 'pending'),
-(1005, 1001, 'pending'),
-(1003, 1005, 'rejected');
+(1009, 1001, 'accepted'),
+(1001, 1005, 'accepted'),
+(1004, 1008, 'accepted'),
+(1005, 1008, 'accepted'),
+(1006, 1002, 'accepted'),
+(1007, 1004, 'accepted'),
+(1010, 1006, 'accepted'),
+(1012, 1007, 'accepted'),
+(1007, 1001, 'pending'),
+(1012, 1001, 'pending'),
+(1008, 1001, 'pending'),
+(1009, 1010, 'rejected'),
+(1003, 1006, 'rejected');
 
 -- Posts (image_path accepts a local uploads/ path or a full image URL)
 INSERT INTO posts (admin_no, content, image_path, created_at) VALUES
-(1001, 'Excited to join College Alumni Connect! Looking forward to meeting everyone.',
-       'https://picsum.photos/seed/alumni1/800/500', DATE_SUB(NOW(), INTERVAL 6 DAY)),
-(1002, 'Our ECE batch reunion is planned for next month. Who is in?',
-       'https://picsum.photos/seed/reunion2/800/500', DATE_SUB(NOW(), INTERVAL 4 DAY)),
-(1003, 'Just finished my final year project demo. Thanks to everyone who helped!',
-       NULL, DATE_SUB(NOW(), INTERVAL 3 DAY)),
-(1004, 'Campus fest photos are up. Great memories!',
-       'https://picsum.photos/seed/campus4/800/500', DATE_SUB(NOW(), INTERVAL 2 DAY)),
-(1001, 'Tip for juniors: start building projects early and share them on GitHub.',
+(1004, 'Botany department field trip to the Western Ghats was unforgettable.',
+       'https://picsum.photos/seed/westernghats/800/500', DATE_SUB(NOW(), INTERVAL 9 DAY)),
+(1008, 'Psychology batch of 2020 reunion planning has started. Please reply if you can join.',
+       NULL, DATE_SUB(NOW(), INTERVAL 7 DAY)),
+(1001, 'Happy to be part of College Alumni Connect. Looking forward to meeting everyone!',
+       'https://picsum.photos/seed/manu1/800/500', DATE_SUB(NOW(), INTERVAL 6 DAY)),
+(1002, 'Solved my first real analysis problem set today. Maths is beautiful.',
+       NULL, DATE_SUB(NOW(), INTERVAL 5 DAY)),
+(1007, 'Our department herbarium got new specimens this week.',
+       'https://picsum.photos/seed/herbarium/800/500', DATE_SUB(NOW(), INTERVAL 4 DAY)),
+(1003, 'Finished my final year project demo. Thanks to everyone who helped!',
+       'https://picsum.photos/seed/projectdemo/800/500', DATE_SUB(NOW(), INTERVAL 3 DAY)),
+(1005, 'Mental health awareness week at campus starts tomorrow. Do join us.',
+       'https://picsum.photos/seed/awareness/800/500', DATE_SUB(NOW(), INTERVAL 2 DAY)),
+(1009, 'Anyone interested in forming a coding club this semester?',
        NULL, DATE_SUB(NOW(), INTERVAL 1 DAY)),
-(1002, 'Sunset from the college terrace today.',
-       'https://picsum.photos/seed/sunset5/800/500', DATE_SUB(NOW(), INTERVAL 5 HOUR)),
-(1003, 'Anyone hiring interns for web development this summer?',
-       NULL, DATE_SUB(NOW(), INTERVAL 1 HOUR)),
-(1005, 'New here. Hello everyone!',
-       NULL, DATE_SUB(NOW(), INTERVAL 30 MINUTE));
+(1006, 'Sunset from the college terrace today.',
+       'https://picsum.photos/seed/sunsetterrace/800/500', DATE_SUB(NOW(), INTERVAL 8 HOUR)),
+(1012, 'Planted saplings with the NSS unit this morning.',
+       'https://picsum.photos/seed/saplings/800/500', DATE_SUB(NOW(), INTERVAL 5 HOUR)),
+(1010, 'New here, first year BSc Maths. Hello everyone!',
+       NULL, DATE_SUB(NOW(), INTERVAL 2 HOUR)),
+(1001, 'Tip for juniors: start building projects early and share them on GitHub.',
+       NULL, DATE_SUB(NOW(), INTERVAL 40 MINUTE));
 
 -- Messages (only between accepted connections)
 INSERT INTO messages (sender_admin_no, receiver_admin_no, message, created_at) VALUES
-(1001, 1002, 'Hi Meera, thanks for connecting!',                 DATE_SUB(NOW(), INTERVAL 3 DAY)),
-(1002, 1001, 'Hey Aarav! Are you coming to the reunion?',        DATE_SUB(NOW(), INTERVAL 3 DAY) + INTERVAL 5 MINUTE),
-(1001, 1002, 'Yes, I will be there.',                            DATE_SUB(NOW(), INTERVAL 3 DAY) + INTERVAL 9 MINUTE),
-(1003, 1001, 'Aarav, can you review my project report?',         DATE_SUB(NOW(), INTERVAL 1 DAY)),
-(1001, 1003, 'Sure, send it over.',                              DATE_SUB(NOW(), INTERVAL 1 DAY) + INTERVAL 10 MINUTE),
-(1002, 1004, 'Loved your campus fest photos!',                   DATE_SUB(NOW(), INTERVAL 2 HOUR)),
-(1004, 1002, 'Thank you! More coming soon.',                     DATE_SUB(NOW(), INTERVAL 1 HOUR));
+(1001, 1002, 'Hi Adhityan, thanks for connecting!',                 DATE_SUB(NOW(), INTERVAL 3 DAY)),
+(1002, 1001, 'Hey Manu! Are you coming to the reunion?',            DATE_SUB(NOW(), INTERVAL 3 DAY) + INTERVAL 5 MINUTE),
+(1001, 1002, 'Yes, I will be there.',                               DATE_SUB(NOW(), INTERVAL 3 DAY) + INTERVAL 9 MINUTE),
+(1003, 1001, 'Manu, can you review my project report?',             DATE_SUB(NOW(), INTERVAL 1 DAY)),
+(1001, 1003, 'Sure Akash, send it over.',                           DATE_SUB(NOW(), INTERVAL 1 DAY) + INTERVAL 10 MINUTE),
+(1009, 1001, 'Manu, can you help me set up the coding club?',       DATE_SUB(NOW(), INTERVAL 5 HOUR)),
+(1001, 1009, 'Of course Basil. Let us plan it this week.',          DATE_SUB(NOW(), INTERVAL 4 HOUR)),
+(1004, 1008, 'Fathima, did you see the field trip photos?',         DATE_SUB(NOW(), INTERVAL 6 DAY)),
+(1008, 1004, 'Yes Azed, they came out really well.',                DATE_SUB(NOW(), INTERVAL 6 DAY) + INTERVAL 15 MINUTE),
+(1005, 1008, 'Fathima, can you share the awareness week schedule?', DATE_SUB(NOW(), INTERVAL 1 DAY)),
+(1010, 1006, 'Hi Aran, welcome senior! Any tips for the first sem?', DATE_SUB(NOW(), INTERVAL 2 HOUR)),
+(1006, 1010, 'Hi Basil, attend every class and ask doubts early.',  DATE_SUB(NOW(), INTERVAL 1 HOUR)),
+(1006, 1002, 'Adhityan, which book do you suggest for analysis?',   DATE_SUB(NOW(), INTERVAL 20 HOUR));
