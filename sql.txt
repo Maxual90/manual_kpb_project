@@ -98,7 +98,7 @@ INSERT INTO students (admin_no, name, email, batch, course, pass, status) VALUES
 (1011, 'Riswan',          'riswan@example.com',         '2019-2022', 'BSc CS',         'password123', 'rejected'),
 (1012, 'Krishnakumar',    'krishnakumar@example.com',   '2021-2024', 'BSc Botany',     'password123', 'approved'),
 (1013, 'Soorya Narayan',  'soorya.narayan@example.com', '2024-2027', 'BSc Psychology', 'password123', 'pending'),
-(1014, 'Shivu',           'shivu@example.com',          '2022-2025', 'BSc CS',         'password123', 'pending');
+(1014, 'Ambadi',           'ambadi@example.com',          '2022-2025', 'BSc CS',         'password123', 'pending');
 
 -- Connection requests
 -- Manu (1001) has 4 accepted connections and 3 pending requests to review
